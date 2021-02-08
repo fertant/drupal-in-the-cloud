@@ -1,0 +1,36 @@
+# Local .terraform directories
+**/.terraform/*
+**/.terraform.d/*
+
+# Terraform .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Terraform .lock files
+.terraform.lock*
+
+# tmp subdirs
+**/.tmp/*
+
+# Crash log files
+crash.log
+
+# Packer results
+results.json
+
+**/.vscode/* 
+
+*id_rsa*
+*id_rsa.pub*
+
+*.exe
+*.jar
+*.zip
+*.7z
+
+# Darwin folders
+.DS_Store
+**/.DS_Store/*
+
+# Java code build
+**/target/*
