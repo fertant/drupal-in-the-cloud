@@ -1,31 +1,31 @@
 module "gke" {
   source                     = "terraform-google-modules/kubernetes-engine/google"
   project_id                 = var.gcp_project
-  name                       = "gke-test-1"
+  name                       = "gke-drupal"
   region                     = var.gcp_region
-  zones                      = ["us-central1-a", "us-central1-b", "us-central1-f"]
-  network                    = "vpc-01"
-  subnetwork                 = "us-central1-01"
-  ip_range_pods              = "us-central1-01-gke-01-pods"
-  ip_range_services          = "us-central1-01-gke-01-services"
-  http_load_balancing        = false
+  zones                      = var.zone
+  network                    = var.vpc_name
+  subnetwork                 = local.network_subnet_01
+  ip_range_pods              = "cluster_ipv4_cidr_block"
+  ip_range_services          = "services_ipv4_cidr_block"
+  http_load_balancing        = true
   horizontal_pod_autoscaling = true
   network_policy             = true
 
   node_pools = [
     {
-      name               = "default-node-pool"
+      name               = "drupal-node-pool"
       machine_type       = "e2-medium"
-      node_locations     = "us-central1-b,us-central1-c"
+      node_locations     = join(", ", var.zone)
       min_count          = 1
-      max_count          = 100
+      max_count          = 3
       local_ssd_count    = 0
       disk_size_gb       = 100
       disk_type          = "pd-standard"
       image_type         = "COS"
       auto_repair        = true
       auto_upgrade       = true
-      service_account    = "project-service-account@<PROJECT ID>.iam.gserviceaccount.com"
+      service_account    = "603521150873-compute@developer.gserviceaccount.com"
       preemptible        = false
       initial_node_count = 80
     },

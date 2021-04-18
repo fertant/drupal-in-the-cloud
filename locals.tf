@@ -81,19 +81,19 @@ locals {
   }
 
   read_replicas = [{
-    name             = "0"
-    zone             = "us-central1-a"
-    tier             = "db-n1-standard-1"
-    ip_configuration = [{
+    name             = "drupal-db-replica"
+    zone             = var.zone[1]
+    tier             = var.db_tier
+    ip_configuration = {
       ipv4_enabled    = var.assign_public_ip
       require_ssl     = true
-      private_network = var.vpc_name
+      private_network = "projects/${var.gcp_project}/global/networks/${var.vpc_name}"
       authorized_networks = []
-    }]
+    }
     database_flags   = [{ name = "long_query_time", value = 1 }]
     disk_autoresize  = null
     disk_size        = null
     disk_type        = var.disk_type
-    user_labels      = { bar = "baz" }
+    user_labels      = {}
   }]
 }

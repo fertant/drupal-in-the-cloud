@@ -1,16 +1,14 @@
 module "sql-db" {
-  source  = "GoogleCloudPlatform/sql-db/google//modules/mysql"
-  version = "4.0.0"
+  source  = "./modules/mysql"
   project_id                      = var.gcp_project
   name                            = var.db_name
   random_instance_name            = var.random_instance_name
-  database_version                = var.database_version
+  database_version                = var.db_version
   region                          = var.gcp_region
-  zone                            = var.db_zone
+  zone                            = var.zone[0]
   tier                            = var.db_tier
   activation_policy               = var.activation_policy
   availability_type               = var.availability_type
-  authorized_gae_applications     = var.authorized_gae_applications
   disk_autoresize                 = var.disk_autoresize
   disk_size                       = var.disk_size
   disk_type                       = var.disk_type
@@ -33,7 +31,7 @@ module "sql-db" {
     # public IP to be mediated by Cloud SQL.
     authorized_networks = []
     require_ssl         = true
-    private_network     = var.vpc_name
+    private_network     = "projects/${var.gcp_project}/global/networks/${var.vpc_name}"
   }
 
   db_name      = var.db_name
@@ -57,4 +55,6 @@ module "sql-db" {
   create_timeout    = var.create_timeout
   update_timeout    = var.update_timeout
   delete_timeout    = var.delete_timeout
+
+  depends_on = [google_service_networking_connection.private_network_connection]
 }

@@ -1,7 +1,7 @@
 # backend configured by command line options
 # stub provider config required
 terraform {
-  required_version = ">= 0.14"
+  required_version = ">= 0.13"
   backend "gcs" {
     bucket      = "drupalcloud-global"
     prefix      = "tfstate/network-tfsate"

@@ -22,8 +22,21 @@ module "vpc" {
       subnet_flow_logs      = "true"
     },
   ]
+}
 
-  //routes = local.network_routes
+resource "google_compute_global_address" "private_ip_alloc" {
+  name          = "private-ip-alloc"
+  project       = var.gcp_project
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  network       = module.vpc.network.network.id
+}
+
+resource "google_service_networking_connection" "private_network_connection" {
+  network                 = module.vpc.network.network.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_ip_alloc.name]
 }
 
 module "cloud_router" {

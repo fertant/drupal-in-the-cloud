@@ -1,116 +1,27 @@
-#-----------------------------------------------
-#   Resource tagging Variables
-#-----------------------------------------------
+/**
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#variable "environment" {
-#  description = "Deploying Environment"
-#}
-#
-#variable "product" {
-#  description = "Name of the product"
-#}
-#
-#variable "sub_product" {
-#  description = "Name of the product"
-#}
-#
-#variable "contact" {
-#  description = "Any valid support group email address."
-#  type        = string
-#}
-#
-#variable "cost_code" {
-#  description = "Various costing sources: cost center, project code, PnL budget."
-#  type        = string
-#}
-#
-#variable "orchestration" {
-#  description = "Path to the Git control repository."
-#  type        = string
-#}
-#
-#variable "role" {
-#  description = "Role to be assigned. Must not contain hyphens"
-#  type        = string
-#}
-#
-#variable "description" {
-#  description = "What is this thing? What does it do? Multiple words separated by '_'"
-#  type        = string
-#}
-
-#-----------------------------------------------
-#   VPC Variables
-#-----------------------------------------------
-variable "gcp_project" {
-  description = "Project name."
-  default     = "brilliant-rhino-303702"
-}
-
-variable "gcp_region" {
-  description = "GCP deployment ragion."
-  default     = "us-central1"
-}
-
-variable "state_bucket_name" {
-  description = "Terraform state bucket name."
-  default     = ""
-}
-
-variable "basic_storage_class" {
-  description = "Basic bucket storage class."
-  default     = "REGIONAL"
-}
-
-variable "vpc_name" {
-  description = "Name of vpc."
-  default     = ""
-}
-
-variable "network_name" {
-  description = "Name of the network inside vpc."
-  default     = ""
-}
-
-variable "subnet_ip_addresses" {
-  description = "Subnet IP addresses"
-  type        = list(string)
-  default     = []
-}
-
-variable "zone" {
-  description = "The zone for the master instance, it should be something like: `a`, `c`."
-  type        = list(string)
-  default     = [
-    "us-central1-a",
-    "us-central1-b"
-  ]
-}
-
-variable "dns_name" {
-  description = "DNS zone name."
-  default     = "drupal-cloud-local"
-}
-
-variable "private_domain" {
-  description = "Private DNS zone name."
-  default     = "drupal-cloud.local."
-}
-
-variable "dns_labels" {
-  type        = map
-  description = "A set of key/value label pairs to assign to this ManagedZone"
-  default = {
-    project = "drupal_in_the_cloud"
-  }
-}
-
-#-----------------------------------------------
-#   DB Variables
-#-----------------------------------------------
-variable "db_name" {
-  description = "The name of the Cloud SQL resources"
+variable "project_id" {
+  description = "The project ID to manage the Cloud SQL resources"
   type        = string
+}
+
+variable "name" {
+  type        = string
+  description = "The name of the Cloud SQL resources"
 }
 
 variable "random_instance_name" {
@@ -120,16 +31,28 @@ variable "random_instance_name" {
 }
 
 // required
-variable "db_version" {
+variable "database_version" {
   description = "The database version to use"
   type        = string
-  default     = "MYSQL_5_7"
 }
 
-variable "db_tier" {
+// required
+variable "region" {
+  description = "The region of the Cloud SQL resources"
+  type        = string
+  default     = "us-central1"
+}
+
+// Master
+variable "tier" {
   description = "The tier for the master instance."
   type        = string
   default     = "db-n1-standard-1"
+}
+
+variable "zone" {
+  description = "The zone for the master instance, it should be something like: `us-central1-a`, `us-east1-c`."
+  type        = string
 }
 
 variable "activation_policy" {
@@ -142,6 +65,12 @@ variable "availability_type" {
   description = "The availability type for the master instance. Can be either `REGIONAL` or `null`."
   type        = string
   default     = "REGIONAL"
+}
+
+variable "authorized_gae_applications" {
+  description = "The list of authorized App Engine project names"
+  type        = list(string)
+  default     = []
 }
 
 variable "disk_autoresize" {
@@ -183,11 +112,11 @@ variable "maintenance_window_hour" {
 variable "maintenance_window_update_track" {
   description = "The update track of maintenance window for the master instance maintenance. Can be either `canary` or `stable`."
   type        = string
-  default     = "stable"
+  default     = "canary"
 }
 
 variable "database_flags" {
-  description = "The database flags for the master instance. See [more details](https://cloud.google.com/sql/docs/mysql/flags)"
+  description = "List of Cloud SQL flags that are applied to the database server. See [more details](https://cloud.google.com/sql/docs/mysql/flags)"
   type = list(object({
     name  = string
     value = string
@@ -195,10 +124,11 @@ variable "database_flags" {
   default = []
 }
 
+
 variable "user_labels" {
-  description = "The key/value labels for the master instances."
   type        = map(string)
   default     = {}
+  description = "The key/value labels for the master instances."
 }
 
 variable "backup_configuration" {
@@ -210,26 +140,30 @@ variable "backup_configuration" {
     location           = string
   })
   default = {
-    binary_log_enabled = true
-    enabled            = true
-    start_time         = "23:55"
+    binary_log_enabled = false
+    enabled            = false
+    start_time         = null
     location           = null
   }
 }
 
-variable "assign_public_ip" {
-  description = "Set to true if the master instance should also have a public IP (less secure)."
-  type        = string
-  default     = false
+variable "ip_configuration" {
+  description = "The ip_configuration settings subblock"
+  type = object({
+    authorized_networks = list(map(string))
+    ipv4_enabled        = bool
+    private_network     = string
+    require_ssl         = bool
+  })
+  default = {
+    authorized_networks = []
+    ipv4_enabled        = true
+    private_network     = null
+    require_ssl         = null
+  }
 }
 
 // Read Replicas
-variable "read_replica_name_suffix" {
-  description = "The optional suffix to add to the read instance name"
-  type        = string
-  default     = ""
-}
-
 variable "read_replicas" {
   description = "List of read replicas to create"
   type = list(object({
@@ -254,16 +188,28 @@ variable "read_replicas" {
   default = []
 }
 
+variable "read_replica_name_suffix" {
+  description = "The optional suffix to add to the read instance name"
+  type        = string
+  default     = ""
+}
+
+variable "db_name" {
+  description = "The name of the default database to create"
+  type        = string
+  default     = "default"
+}
+
 variable "db_charset" {
   description = "The charset for the default database"
   type        = string
-  default     = "utf8mb4"
+  default     = ""
 }
 
 variable "db_collation" {
   description = "The collation for the default database. Example: 'utf8_general_ci'"
   type        = string
-  default     = "utf8mb4_general_ci"
+  default     = ""
 }
 
 variable "additional_databases" {
@@ -279,7 +225,13 @@ variable "additional_databases" {
 variable "user_name" {
   description = "The name of the default user"
   type        = string
-  default     = ""
+  default     = "default"
+}
+
+variable "user_host" {
+  description = "The host for the default user"
+  type        = string
+  default     = "%"
 }
 
 variable "user_password" {
@@ -301,19 +253,25 @@ variable "additional_users" {
 variable "create_timeout" {
   description = "The optional timout that is applied to limit long database creates."
   type        = string
-  default     = "15m"
+  default     = "10m"
 }
 
 variable "update_timeout" {
   description = "The optional timout that is applied to limit long database updates."
   type        = string
-  default     = "15m"
+  default     = "10m"
 }
 
 variable "delete_timeout" {
   description = "The optional timout that is applied to limit long database deletes."
   type        = string
-  default     = "15m"
+  default     = "10m"
+}
+
+variable "encryption_key_name" {
+  description = "The full path to the encryption key used for the CMEK disk encryption"
+  type        = string
+  default     = null
 }
 
 variable "module_depends_on" {
@@ -325,7 +283,7 @@ variable "module_depends_on" {
 variable "deletion_protection" {
   description = "Used to block Terraform from deleting a SQL Instance."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "read_replica_deletion_protection" {
@@ -334,8 +292,14 @@ variable "read_replica_deletion_protection" {
   default     = false
 }
 
-variable "encryption_key_name" {
-  description = "The full path to the encryption key used for the CMEK disk encryption"
-  type        = string
-  default     = null
+variable "enable_default_db" {
+  description = "Enable or disable the creation of the default database"
+  type        = bool
+  default     = true
+}
+
+variable "enable_default_user" {
+  description = "Enable or disable the creation of the default user"
+  type        = bool
+  default     = true
 }
