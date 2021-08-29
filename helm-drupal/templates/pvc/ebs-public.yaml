@@ -1,0 +1,22 @@
+{{- if .Values.ebs.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+{{- if .Values.ebs.enabled }}
+{{ toYaml .Values.ebs.annotations | indent 4 }}
+{{- end }}
+  name: {{ include "drupal.fullname" . }}-public
+spec:
+  accessModes:
+    - {{ .Values.ebs.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.ebs.size }}
+  volumeName: {{ include "drupal.fullname" . }}-public
+{{- if eq "-" .Values.ebs.storageClass }}
+  storageClassName: ""
+{{- else if .Values.ebs.storageClass }}
+  storageClassName: "{{ .Values.ebs.storageClass }}"
+{{- end }}
+{{- end }}

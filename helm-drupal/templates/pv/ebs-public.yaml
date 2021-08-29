@@ -1,0 +1,28 @@
+{{- if .Values.ebs.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+{{- if .Values.ebs.annotations }}
+  annotations:
+{{ toYaml .Values.ebs.annotations | indent 4 }}
+{{- end }}
+  name: {{ include "drupal.fullname" . }}-public
+spec:
+  capacity:
+    storage: {{ .Values.ebs.size }}
+  accessModes:
+    - {{ .Values.ebs.accessMode }}
+{{- if eq "-" .Values.ebs.storageClass }}
+  storageClassName: ""
+{{- else if .Values.ebs.storageClass }}
+  storageClassName: "{{ .Values.ebs.storageClass }}"
+{{- end }}
+{{- if .Values.ebs.public }}
+{{ toYaml .Values.ebs.public | indent 2 }}
+{{- end }}
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=82
+    - gid=82
+{{- end }}

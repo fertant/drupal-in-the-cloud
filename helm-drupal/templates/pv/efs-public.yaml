@@ -1,0 +1,28 @@
+{{- if .Values.efs.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+{{- if .Values.efs.annotations }}
+  annotations:
+{{ toYaml .Values.efs.annotations | indent 4 }}
+{{- end }}
+  name: {{ include "drupal.fullname" . }}-public
+spec:
+  capacity:
+    storage: {{ .Values.efs.size }}
+  accessModes:
+    - {{ .Values.efs.accessMode }}
+{{- if eq "-" .Values.efs.storageClass }}
+  storageClassName: ""
+{{- else if .Values.efs.storageClass }}
+  storageClassName: "{{ .Values.efs.storageClass }}"
+{{- end }}
+{{- if .Values.efs.public }}
+{{ toYaml .Values.efs.public | indent 2 }}
+{{- end }}
+  mountOptions:
+    - dir_mode=0777
+    - file_mode=0777
+    - uid=82
+    - gid=82
+{{- end }}

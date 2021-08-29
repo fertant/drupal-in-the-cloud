@@ -22,21 +22,9 @@ spec:
         app.kubernetes.io/managed-by: {{ .Release.Service }}
     spec:
       restartPolicy: OnFailure
-{{- if or (.Values.drupal.initContainers) (or (.Values.azureFile.enabled) (.Values.sharedDisk.enabled)) }}
+{{- if or (.Values.drupal.initContainers) ( or (.Values.efs.enabled) (.Values.ebs.enabled)) }}
       initContainers:
-{{- if .Values.sharedDisk.enabled }}
-        - name: init-chown
-          image: 'alpine:3.10'
-          command:
-            - chown
-            - '-R'
-            - '82:82'
-            - /mnt/azure
-          volumeMounts:
-            - name: files-public
-              mountPath: /mnt/azure
-{{- end }}
-{{- if or (.Values.azureFile.enabled) (.Values.sharedDisk.enabled) }}
+{{- if or (.Values.efs.enabled) (.Values.ebs.enabled) }}
         - name: init-media-icons-folder
           image: 'alpine:3.10'
           command:
@@ -371,7 +359,7 @@ spec:
       - name: files
         persistentVolumeClaim:
           claimName: {{ template "drupal.fullname" . }}-drupal
-{{- else if or (.Values.azureFile.enabled) (.Values.sharedDisk.enabled) }}
+{{- else if or (.Values.efs.enabled) (.Values.ebs.enabled) }}
       - name: files-public
         persistentVolumeClaim:
           claimName: {{ include "drupal.fullname" . }}-public

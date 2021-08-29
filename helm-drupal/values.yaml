@@ -16,7 +16,7 @@ ingress:
   #      - chart-example.local
 
 drupal:
-  image: drupal
+  image: <account_id>.dkr.ecr.eu-west-3.amazonaws.com/drupal
 
   ## Note that by default we use appVersion to get image tag
   # tag: 1.0.1
@@ -27,7 +27,7 @@ drupal:
   ## ref: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   ##
   imagePullSecrets:
-    - name: awsjdecr
+    - name: awsecr
 
   ## Specify a imagePullPolicy
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -42,7 +42,7 @@ drupal:
 
   ## Application password
   ##
-  ## password: jd2020
+  ## password: 2020
 
   ## Site configuration
   ##
@@ -171,10 +171,10 @@ drupal:
 
 nginx:
   ## Nginx image version
-  image: nginx-drupal
+  image: <account_id>.dkr.ecr.eu-west-3.amazonaws.com/nginx
 
   ## Note that by default we use appVersion to get image tag
-  tag: 1.0.0
+  tag: 1.0.0-nginx
 
   ## Optionally specify an array of imagePullSecrets.
   ## Secrets must be manually created in the namespace.
@@ -183,7 +183,7 @@ nginx:
   # imagePullSecrets:
   #   - name: myRegistryKeySecretName
   imagePullSecrets:
-    - name: awsjdecr
+    - name: awsecr
 
   ## Specify a imagePullPolicy
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
@@ -195,7 +195,7 @@ nginx:
   # Set your cluster's DNS resolution service here
   resolver: kube-dns.kube-system.svc.cluster.local
 
-  serviceType: NodePort
+  serviceType: LoadBalancer
 
   persistence:
     enabled: false
@@ -239,44 +239,48 @@ external:
   port: 3306
   host: mysql.example.org
   # Credentials
-  database: jd
-  user: jd
+  database: drupal
+  user: drupal
   password: password
 
-# Shared Disk logic
-sharedDisk:
-  enabled: false
-
-  annotations: {}
-  accessMode: ReadWriteMany
-  size: 256Gi
-  # storageClass: "-"
-
-  maxShares: 2
-
-  private:
-    azureFile:
-      secretName: drupal-storage
-      shareName: drupal-private
-      readOnly: false
-
-# Azure File logic
-azureFile:
+# EFS storage
+efs:
   enabled: false
 
   annotations: {}
   accessMode: ReadWriteMany
   size: 100Gi
-  storageClass: "azurefile"
+  storageClass: "efs-sc"
 
   public:
-    azureFile:
+    efs:
       secretName: drupal-storage
       shareName: drupal-public
       readOnly: false
 
   private:
-    azureFile:
+    efs:
+      secretName: drupal-storage
+      shareName: drupal-private
+      readOnly: false
+
+# EBS storage
+ebs:
+  enabled: false
+
+  annotations: {}
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  storageClass: "ebs-gp2"
+
+  public:
+    ebs:
+      secretName: drupal-storage
+      shareName: drupal-public
+      readOnly: false
+
+  private:
+    ebs:
       secretName: drupal-storage
       shareName: drupal-private
       readOnly: false
@@ -325,7 +329,7 @@ postgresql:
   enabled: false
   image:
     tag: 11.6.0-debian-9-r0
-  postgresqlUsername: jd
+  postgresqlUsername: drupal
   postgresqlPassword: ""
   postgresqlDatabase: js
   postgresqlConfiguration:
@@ -437,7 +441,7 @@ minio:
 
   defaultBucket:
     enabled: true
-    name: jd
+    name: drupal
 
 ## Configuration values for the Redis dependency sub-chart
 ## ref: https://github.com/bitnami/charts/blob/master/bitnami/redis/README.md
